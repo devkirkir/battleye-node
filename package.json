@@ -1,0 +1,46 @@
+{
+  "name": "battleye-node",
+  "version": "0.8.0",
+  "scripts": {
+    "build:rollup": "rollup -c ./rollup.config.js",
+    "build:types": "tsc -p tsconfig.json --emitDeclarationOnly",
+    "build": "npm run build:rollup && npm run build:types"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "keywords": [
+    "battleye",
+    "rcon",
+    "dayz",
+    "arma"
+  ],
+  "author": "Kirill Kirpichenko <kirpich-99-biz@mail.ru>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devkirkir/battleye-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/devkirkir/battleye-node/issues"
+  },
+  "homepage": "https://github.com/devkirkir/battleye-node",
+  "license": "ISC",
+  "description": "A JavaScript library for communicating with BattlEye’s RCon (Remote Console) protocol. Easily send commands, receive server responses, and automate server management for games protected by BattlEye anti-cheat.",
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/node": "^22.15.29",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "buffer-crc32": "^1.0.0"
+  }
+}
