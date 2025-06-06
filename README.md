@@ -1,6 +1,6 @@
 # battleye-node
 
-A JavaScript library for communicating with BattlEye’s RCon (Remote Console) protocol. Easily send commands, receive server responses, and automate server management for games protected by BattlEye anti-cheat.
+A TS/JS library for communicating with BattlEye’s RCon (Remote Console) protocol. Easily send commands, receive server responses, and automate server management for games protected by BattlEye anti-cheat.
 
 > **Note:** This is basic functionality only. Development is ongoing and new features are planned.
 
@@ -20,6 +20,9 @@ const rcon = new RCON({
   port: 2302,
   password: "your_rcon_password",
   connectionType: "udp4", // or "udp6"
+  connectionTimeout: 50000; // in ms (default 50000, min 50000)
+  connectionInterval: 5000; // in ms (default 5000, min 5000)
+  keepAliveInterval?: number; // in ms (default 10000)
 });
 
 // Login
@@ -35,6 +38,15 @@ console.log(rcon.isRconConnected);
 
 // Logout
 rcon.logout();
+
+// Events
+rcon.on("message", (msg) => {
+  console.log(msg);
+});
+
+rcon.on("error", (msg) => {
+  console.log(msg);
+});
 ```
 
 ## API
@@ -42,11 +54,14 @@ rcon.logout();
 ### Constructor
 
 ```typescript
-new RCON(config: {
+
   address: string;
   port: number;
   password: string;
   connectionType?: "udp4" | "udp6";
+  connectionTimeout?: number;
+  connectionInterval?: number;
+  keepAliveInterval?: number;
 });
 ```
 
@@ -59,6 +74,11 @@ new RCON(config: {
 ### Properties
 
 - `isRconConnected: boolean` — connection status.
+
+### Events
+
+- `"message"`: Emitted when a message is received from the server.
+- `"error"`: Emitted when an error occurs.
 
 ## Features
 
