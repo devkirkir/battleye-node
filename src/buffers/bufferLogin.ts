@@ -1,4 +1,4 @@
-import bufferHeader from "./bufferHeader";
+import bufferHeader from "./bufferHeader.js";
 
 function bufferLogin(pass: string): Buffer {
   const buf = Buffer.concat([Buffer.from([0xff, 0x00]), Buffer.from(pass, "ascii")]);

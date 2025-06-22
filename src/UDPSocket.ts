@@ -7,7 +7,7 @@ interface Config {
   connectionType?: "udp4" | "udp6";
 }
 
-class UDPSocket {
+export class UDPSocket {
   config: Config;
   socket: dgram.Socket;
 

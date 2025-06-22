@@ -1,6 +1,6 @@
 {
   "name": "battleye-node",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "scripts": {
     "build:rollup": "rollup -c ./rollup.config.js",
     "build:types": "tsc -p tsconfig.json --emitDeclarationOnly",
@@ -8,6 +8,7 @@
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
+  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -41,6 +42,6 @@
   },
   "dependencies": {
     "@types/node": "^22.15.30",
-    "buffer-crc32": "^1.0.0"
+    "crc-32": "^1.2.2"
   }
 }

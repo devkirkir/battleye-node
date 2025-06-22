@@ -1,6 +1,6 @@
-import bufferLogin from "./bufferLogin";
-import bufferAck from "./bufferAck";
-import bufferKeepAlive from "./bufferKeepAlive";
-import bufferCommand from "./bufferCommand";
+import bufferLogin from "./bufferLogin.js";
+import bufferAck from "./bufferAck.js";
+import bufferKeepAlive from "./bufferKeepAlive.js";
+import bufferCommand from "./bufferCommand.js";
 
 export { bufferLogin, bufferAck, bufferKeepAlive, bufferCommand };

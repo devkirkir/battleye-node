@@ -1,6 +1,6 @@
 import EventEmitter from "events";
-import UDPSocket from "./UDPSocket";
-import { bufferLogin, bufferAck, bufferKeepAlive, bufferCommand } from "./buffers/index";
+import UDPSocket from "./UDPSocket.js";
+import { bufferLogin, bufferAck, bufferKeepAlive, bufferCommand } from "./buffers/index.js";
 
 interface Config {
   address: string;

@@ -1,4 +1,4 @@
-import bufferHeader from "./bufferHeader";
+import bufferHeader from "./bufferHeader.js";
 
 const bufferAck = (sequence: number) => {
   const buf = Buffer.from([0xff, 0x02, sequence]);

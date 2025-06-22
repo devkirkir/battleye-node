@@ -1,4 +1,4 @@
-import bufferHeader from "./bufferHeader";
+import bufferHeader from "./bufferHeader.js";
 
 const bufferKeepAlive = (sequence: number) => {
   const buf = Buffer.from([0xff, 0x01, sequence]);
