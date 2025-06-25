@@ -12,11 +12,17 @@ interface Config {
   keepAliveInterval?: number;
 }
 
+interface InternalConfig extends Config {
+  connectionTimeout: number;
+  connectionInterval: number;
+  keepAliveInterval: number;
+}
+
 type MessageType = "message" | "error";
 
 class RCON extends EventEmitter {
-  private config: Config;
-  private udp;
+  private config: InternalConfig;
+  private udp: UDPSocket | null;
   private connected: boolean = false;
   private packageSend: boolean = false;
   private sequence: number = -1;
@@ -46,41 +52,44 @@ class RCON extends EventEmitter {
 
   login() {
     if (this.connected) {
-      this.printMessage("Already connected", "error");
+      this.printMessage("Already connected");
       return;
     }
 
     if (!this.connected && !this.packageSend) {
       this.packageSend = true;
 
-      this.udp.send(bufferLogin(this.config.password));
-      this.connect();
+      this.udp?.send(bufferLogin(this.config.password));
+      this.connectAttemping();
     }
   }
 
   logout() {
-    this.printMessage(this.connected ? "Disconnected" : "You are not connected", "message");
-
+    if (this.udp?.socket) {
+      this.udp.close();
+    }
     this.reset();
-    this.udp.close();
   }
 
   commandSend(command: string) {
-    if (!this.connected) {
-      this.printMessage("Not connected", "error");
+    if (this.loginConnectionInterval) {
+      return;
+    }
+
+    if (!this.connected || !this.udp?.socket) {
+      this.printMessage("Not connected", "error", true);
 
       return;
     }
 
     if (this.sequenceQueue.size >= 5) {
-      this.onError("commandSend The server is not responding");
+      this.printMessage("The server is not responding", "error", true);
 
       return;
     }
 
     this.sequence = this.sequence >= 255 ? 0 : this.sequence + 1;
-
-    this.udp.send(bufferCommand(command, this.sequence));
+    this.udp?.send(bufferCommand(command, this.sequence));
   }
 
   get isRconConnected() {
@@ -89,21 +98,19 @@ class RCON extends EventEmitter {
 
   private onLogin() {
     this.connected = true;
+    this.emit("onConnect", true);
 
     if (this.loginConnectionInterval) {
       clearInterval(this.loginConnectionInterval);
+      this.loginConnectionInterval = null;
     }
 
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
     }
 
     this.keepAliveInterval = setInterval(() => this.sendKeepAlive(), this.config.keepAliveInterval);
-  }
-
-  private onError(msg: string) {
-    this.printMessage(msg, "error");
-    this.logout();
   }
 
   private onACK(sequence: number, msg?: string) {
@@ -113,7 +120,7 @@ class RCON extends EventEmitter {
       return;
     }
 
-    this.udp.send(bufferAck(sequence));
+    this.udp?.send(bufferAck(sequence));
 
     if (msg) {
       this.printMessage(msg);
@@ -127,28 +134,29 @@ class RCON extends EventEmitter {
       this.printMessage("The server is not responding. Trying to reconnect...");
 
       this.reset();
-      this.connect();
+      this.connectAttemping();
 
       return;
     }
 
     this.sequenceQueue.add(this.sequence);
-    this.udp.send(bufferKeepAlive(this.sequence));
+    this.udp?.send(bufferKeepAlive(this.sequence));
   }
 
-  private connect() {
+  private connectAttemping() {
     let attemps = Math.floor(this.config.connectionTimeout / 5000);
     let attemptCount = 0;
 
     this.loginConnectionInterval = setInterval(() => {
       if (attemptCount >= attemps && this.loginConnectionInterval) {
-        this.onError("The server is not responding");
+        this.printMessage("The server is not responding", "error", true);
         clearInterval(this.loginConnectionInterval);
+        this.loginConnectionInterval = null;
 
         return;
       }
 
-      this.udp.send(bufferLogin(this.config.password));
+      this.udp?.send(bufferLogin(this.config.password));
 
       attemptCount++;
 
@@ -159,10 +167,12 @@ class RCON extends EventEmitter {
   private reset() {
     if (this.keepAliveInterval) {
       clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
     }
 
     if (this.loginConnectionInterval) {
       clearInterval(this.loginConnectionInterval);
+      this.loginConnectionInterval = null;
     }
 
     this.connected = false;
@@ -170,9 +180,15 @@ class RCON extends EventEmitter {
     this.loginAck = false;
     this.sequence = -1;
     this.sequenceQueue.clear();
+    this.udp = null;
   }
 
-  private printMessage(msg: string, type: MessageType = "message") {
+  private printMessage(msg: string, type: MessageType = "message", isExit: boolean = false) {
+    if (type === "error" && isExit) {
+      this.emit("onConnect", false);
+      this.logout();
+    }
+
     this.emit(type, msg);
   }
 
@@ -186,7 +202,9 @@ class RCON extends EventEmitter {
       case 0:
         if (!this.loginAck) {
           this.loginAck = true;
-          payload.readUInt8(1) === 1 ? this.onLogin() : this.onError("Auth error");
+          payload.readUInt8(1) === 1
+            ? this.onLogin()
+            : this.printMessage("Authentication failed. Disconnecting...", "error", true);
         }
 
         break;

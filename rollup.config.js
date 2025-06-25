@@ -17,6 +17,5 @@ export default {
     typescript({
       tsconfig: "./tsconfig.build.json",
     }),
-    terser(),
   ],
 };

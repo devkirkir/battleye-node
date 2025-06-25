@@ -19,9 +19,9 @@ const rcon = new RCON({
   address: "127.0.0.1",
   port: 2302,
   password: "your_rcon_password",
-  connectionType: "udp4", // or "udp6"
-  connectionTimeout: 50000; // in ms (default 50000, min 50000)
-  connectionInterval: 5000; // in ms (default 5000, min 5000)
+  connectionType?: "udp4", // or "udp6"
+  connectionTimeout?: 50000; // in ms (default 50000, min 50000)
+  connectionInterval?: 5000; // in ms (default 5000, min 5000)
   keepAliveInterval?: number; // in ms (default 10000)
 });
 
@@ -40,6 +40,10 @@ console.log(rcon.isRconConnected);
 rcon.logout();
 
 // Events
+rcon.on("onConnect", (isConnected) => {
+  console.log(isConnected);
+});
+
 rcon.on("message", (msg) => {
   console.log(msg);
 });
@@ -77,6 +81,7 @@ rcon.on("error", (msg) => {
 
 ### Events
 
+- `"onConnect"`: Emitted when the connection state changes
 - `"message"`: Emitted when a message is received from the server.
 - `"error"`: Emitted when an error occurs.
 

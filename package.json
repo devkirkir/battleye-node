@@ -1,6 +1,6 @@
 {
   "name": "battleye-node",
-  "version": "0.9.1",
+  "version": "0.9.5",
   "scripts": {
     "build:rollup": "rollup -c ./rollup.config.js",
     "build:types": "tsc -p tsconfig.json --emitDeclarationOnly",

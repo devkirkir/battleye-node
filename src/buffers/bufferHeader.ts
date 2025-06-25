@@ -1,7 +1,7 @@
-import { buf } from "crc-32";
+import CRC32 from "crc-32";
 
 const bufferHeader = (subsequent: Buffer) => {
-  const crc: number = buf(subsequent);
+  const crc: number = CRC32.buf(subsequent);
   const crcBuffer = Buffer.alloc(4);
   crcBuffer.writeInt32LE(crc, 0);
 
