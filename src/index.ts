@@ -52,7 +52,7 @@ class RCON extends EventEmitter {
 
   login() {
     if (this.connected) {
-      this.printMessage("Already connected");
+      this.printMessage("Already connected", "error");
       return;
     }
 
@@ -131,7 +131,7 @@ class RCON extends EventEmitter {
     this.sequence = this.sequence >= 255 ? 0 : this.sequence + 1;
 
     if (this.sequenceQueue.size >= 2) {
-      this.printMessage("The server is not responding. Trying to reconnect...");
+      this.printMessage("The server is not responding. Trying to reconnect...", "error");
 
       this.reset();
       this.connectAttemping();
@@ -160,7 +160,7 @@ class RCON extends EventEmitter {
 
       attemptCount++;
 
-      this.printMessage("Trying to connect...");
+      this.printMessage("Trying to connect...", "error");
     }, this.config.connectionInterval);
   }
 

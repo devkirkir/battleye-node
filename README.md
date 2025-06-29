@@ -19,10 +19,10 @@ const rcon = new RCON({
   address: "127.0.0.1",
   port: 2302,
   password: "your_rcon_password",
-  connectionType?: "udp4", // or "udp6"
-  connectionTimeout?: 50000; // in ms (default 50000, min 50000)
-  connectionInterval?: 5000; // in ms (default 5000, min 5000)
-  keepAliveInterval?: number; // in ms (default 10000)
+  connectionType: "udp4", // or "udp6"
+  connectionTimeout: 50000, // in ms (default 50000, min 50000)
+  connectionInterval: 5000, // in ms (default 5000, min 5000)
+  keepAliveInterval: number, // in ms (default 10000)
 });
 
 // Login
@@ -58,7 +58,6 @@ rcon.on("error", (msg) => {
 ### Constructor
 
 ```typescript
-
   address: string;
   port: number;
   password: string;
