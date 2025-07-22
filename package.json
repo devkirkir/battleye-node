@@ -1,6 +1,6 @@
 {
   "name": "battleye-node",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "scripts": {
     "build:rollup": "rollup -c ./rollup.config.js",
     "build:types": "tsc -p tsconfig.json --emitDeclarationOnly",
@@ -36,7 +36,7 @@
   "description": "A TS/JS library for communicating with BattlEye’s RCon (Remote Console) protocol. Easily send commands, receive server responses, and automate server management for games protected by BattlEye anti-cheat.",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
-    "@rollup/plugin-typescript": "^12.1.2",
+    "@rollup/plugin-typescript": "^12.1.4",
     "tslib": "^2.8.1",
     "typescript": "^5.8.3"
   },

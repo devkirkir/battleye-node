@@ -46,8 +46,6 @@ class RCON extends EventEmitter {
     };
 
     this.udp = new UDPSocket(config);
-
-    this.udp.socket.on("message", (msg: Buffer) => this.onMessage(msg));
   }
 
   login() {
@@ -56,7 +54,13 @@ class RCON extends EventEmitter {
       return;
     }
 
+    if (!this.udp?.isSocketOpen) {
+      this.udp?.open();
+    }
+
     if (!this.connected && !this.packageSend) {
+      this.udp?.socket.on("message", (msg: Buffer) => this.onMessage(msg));
+
       this.packageSend = true;
 
       this.udp?.send(bufferLogin(this.config.password));
@@ -65,9 +69,10 @@ class RCON extends EventEmitter {
   }
 
   logout() {
-    if (this.udp?.socket) {
+    if (this.udp?.isSocketOpen) {
       this.udp.close();
     }
+
     this.reset();
   }
 
@@ -180,7 +185,6 @@ class RCON extends EventEmitter {
     this.loginAck = false;
     this.sequence = -1;
     this.sequenceQueue.clear();
-    this.udp = null;
   }
 
   private printMessage(msg: string, type: MessageType = "message", isExit: boolean = false) {
