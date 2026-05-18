@@ -1,28 +1,14 @@
 import EventEmitter from "events";
 import UDPSocket from "./UDPSocket.js";
 import { bufferLogin, bufferAck, bufferKeepAlive, bufferCommand } from "./buffers/index.js";
-
-interface Config {
-  address: string;
-  port: number;
-  password: string;
-  connectionType?: "udp4" | "udp6";
-  connectionTimeout?: number;
-  connectionInterval?: number;
-  keepAliveInterval?: number;
-}
-
-interface InternalConfig extends Config {
-  connectionTimeout: number;
-  connectionInterval: number;
-  keepAliveInterval: number;
-}
+import type { Config, InternalConfig } from "./types.js";
+import { parsePacket } from "./protocol.js";
 
 type MessageType = "message" | "error";
 
 class RCON extends EventEmitter {
   private config: InternalConfig;
-  private udp: UDPSocket | null;
+  private udp: UDPSocket | null = null;
   private connected: boolean = false;
   private packageSend: boolean = false;
   private sequence: number = -1;
@@ -45,7 +31,6 @@ class RCON extends EventEmitter {
       keepAliveInterval: config.keepAliveInterval ?? 10000,
     };
 
-    this.udp = new UDPSocket(config);
   }
 
   login() {
@@ -54,18 +39,20 @@ class RCON extends EventEmitter {
       return;
     }
 
-    if (!this.udp?.isSocketOpen) {
-      this.udp?.open();
-    }
-
-    if (!this.connected && !this.packageSend) {
-      this.udp?.socket.on("message", (msg: Buffer) => this.onMessage(msg));
-
+    if (!this.packageSend) {
+      this.open();
       this.packageSend = true;
-
       this.udp?.send(bufferLogin(this.config.password));
-      this.connectAttemping();
+      this.connectAttempting();
     }
+  }
+
+  private open() {
+    if (this.udp?.isSocketOpen) {
+      this.udp.close();
+    }
+    this.udp = new UDPSocket(this.config);
+    this.udp.socket.on("message", (msg: Buffer) => this.onMessage(msg));
   }
 
   logout() {
@@ -94,6 +81,7 @@ class RCON extends EventEmitter {
     }
 
     this.sequence = this.sequence >= 255 ? 0 : this.sequence + 1;
+    this.sequenceQueue.add(this.sequence);
     this.udp?.send(bufferCommand(command, this.sequence));
   }
 
@@ -139,7 +127,7 @@ class RCON extends EventEmitter {
       this.printMessage("The server is not responding. Trying to reconnect...", "error");
 
       this.reset();
-      this.connectAttemping();
+      this.connectAttempting();
 
       return;
     }
@@ -148,12 +136,12 @@ class RCON extends EventEmitter {
     this.udp?.send(bufferKeepAlive(this.sequence));
   }
 
-  private connectAttemping() {
-    let attemps = Math.floor(this.config.connectionTimeout / 5000);
+  private connectAttempting() {
+    let attempts = Math.floor(this.config.connectionTimeout / 5000);
     let attemptCount = 0;
 
     this.loginConnectionInterval = setInterval(() => {
-      if (attemptCount >= attemps && this.loginConnectionInterval) {
+      if (attemptCount >= attempts && this.loginConnectionInterval) {
         this.printMessage("The server is not responding", "error", true);
         clearInterval(this.loginConnectionInterval);
         this.loginConnectionInterval = null;
@@ -197,39 +185,32 @@ class RCON extends EventEmitter {
   }
 
   private onMessage(msg: Buffer) {
-    if (msg.toString("utf8", 0, 2) !== "BE") return;
+    const packet = parsePacket(msg);
+    if (!packet) return;
 
-    const payload = msg.subarray(7, msg.length);
-    const code = payload.readUInt8(0);
-
-    switch (code) {
+    switch (packet.type) {
       case 0:
         if (!this.loginAck) {
           this.loginAck = true;
-          payload.readUInt8(1) === 1
+
+          packet.success
             ? this.onLogin()
             : this.printMessage("Authentication failed. Disconnecting...", "error", true);
         }
-
+        
         break;
 
       case 1:
-        let payloadSequence = payload.readUInt8(1);
+        this.sequenceQueue.delete(packet.sequence);
 
-        if (this.sequenceQueue.has(payloadSequence)) {
-          this.sequenceQueue.delete(payloadSequence);
-        }
-
-        let message = payload.toString("utf-8", 2, payload.length);
-
-        if (message) {
-          this.printMessage(message);
+        if (packet.message) {
+          this.printMessage(packet.message);
         }
 
         break;
 
       case 2:
-        this.onACK(payload.readUInt8(1), payload.toString("utf-8", 2, payload.length));
+        this.onACK(packet.sequence, packet.message);
 
         break;
     }

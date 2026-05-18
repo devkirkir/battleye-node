@@ -1,18 +1,14 @@
 import dgram from "dgram";
+import type { Config } from "./types.js";
 
-interface Config {
-  address: string;
-  port: number;
-  password: string;
-  connectionType?: "udp4" | "udp6";
-}
+type UDPConfig = Pick<Config, "address" | "port" | "password" | "connectionType">;
 
 export class UDPSocket {
-  config: Config;
+  config: UDPConfig;
   socket: dgram.Socket;
   isSocketOpen: boolean = false;
 
-  constructor(config: Config) {
+  constructor(config: UDPConfig) {
     this.config = config;
 
     this.socket = dgram.createSocket(this.config.connectionType || "udp4");
@@ -21,12 +17,6 @@ export class UDPSocket {
 
   send(buffer: Buffer) {
     this.socket.send(buffer, 0, buffer.length, this.config.port, this.config.address);
-  }
-
-  open() {
-    this.socket = dgram.createSocket(this.config.connectionType || "udp4");
-
-    this.isSocketOpen = true;
   }
 
   close() {
